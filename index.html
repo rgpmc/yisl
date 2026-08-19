@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-Frame Doom-Style VR Game</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: red;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #ammo {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            font-size: 24px;
+            font-family: Arial;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        #health {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-family: Arial;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        #debug {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #00ff00;
+            font-size: 12px;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+            max-width: 300px;
+        }
+        #screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 999;
+            transition: opacity 0.1s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="crosshair">+</div>
+    <div id="ammo">Ammo: 120</div>
+    <div id="health">Health: 100</div>
+    <div id="debug">Initializing...</div>
+    <div id="screen-flash"></div>
+
+    <a-scene background="color: #1a1a1a">
+        <!-- Player camera -->
+        <a-entity id="player" position="0 1.6 5">
+            <a-camera></a-camera>
+        </a-entity>
+
+        <!-- Policeman character -->
+        <a-entity 
+            id="policeman"
+            gltf-model="url(https://cdn.sketchfab.com/models/1feddb68b5fb4439b99e1af34b49ed47/3e766399d06c41fba0e23d26a7d4e881.glb)"
+            position="0 0 -3"
+            scale="0.8 0.8 0.8"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 10000">
+        </a-entity>
+
+        <!-- Enemy 1 - Knife-shaped model -->
+        <a-entity 
+            id="enemy-1"
+            position="-3 0.75 -8"
+            class="enemy"
+            data-index="0">
+            <!-- Blade (red metallic cone) -->
+            <a-cone 
+                radius-bottom="0.3" radius-top="0.05" height="1.2"
+                material="color: #cc0000; metalness: 0.8; roughness: 0.2"
+                rotation="0 0 0"
+                position="0 0 0">
+            </a-cone>
+            <!-- Handle (dark red) -->
+            <a-cylinder 
+                radius="0.15" height="0.6"
+                material="color: #330000"
+                position="0 -0.5 0">
+            </a-cylinder>
+            <!-- Guard (gray metal) -->
+            <a-box 
+                width="0.5" height="0.1" depth="0.2"
+                material="color: #666666"
+                position="0 -0.2 0">
+            </a-box>
+        </a-entity>
+
+        <!-- Enemy 2 - Knife-shaped model -->
+        <a-entity 
+            id="enemy-2"
+            position="3 0.75 -8"
+            class="enemy"
+            data-index="1">
+            <!-- Blade -->
+            <a-cone 
+                radius-bottom="0.3" radius-top="0.05" height="1.2"
+                material="color: #cc0000; metalness: 0.8; roughness: 0.2"
+                rotation="0 0 0"
+                position="0 0 0">
+            </a-cone>
+            <!-- Handle -->
+            <a-cylinder 
+                radius="0.15" height="0.6"
+                material="color: #330000"
+                position="0 -0.5 0">
+            </a-cylinder>
+            <!-- Guard -->
+            <a-box 
+                width="0.5" height="0.1" depth="0.2"
+                material="color: #666666"
+                position="0 -0.2 0">
+            </a-box>
+        </a-entity>
+
+        <!-- Enemy 3 - Knife-shaped model -->
+        <a-entity 
+            id="enemy-3"
+            position="-2 0.75 -15"
+            class="enemy"
+            data-index="2">
+            <!-- Blade -->
+            <a-cone 
+                radius-bottom="0.3" radius-top="0.05" height="1.2"
+                material="color: #cc0000; metalness: 0.8; roughness: 0.2"
+                rotation="0 0 0"
+                position="0 0 0">
+            </a-cone>
+            <!-- Handle -->
+            <a-cylinder 
+                radius="0.15" height="0.6"
+                material="color: #330000"
+                position="0 -0.5 0">
+            </a-cylinder>
+            <!-- Guard -->
+            <a-box 
+                width="0.5" height="0.1" depth="0.2"
+                material="color: #666666"
+                position="0 -0.2 0">
+            </a-box>
+        </a-entity>
+
+        <!-- Enemy 4 - Knife-shaped model -->
+        <a-entity 
+            id="enemy-4"
+            position="2 0.75 -15"
+            class="enemy"
+            data-index="3">
+            <!-- Blade -->
+            <a-cone 
+                radius-bottom="0.3" radius-top="0.05" height="1.2"
+                material="color: #cc0000; metalness: 0.8; roughness: 0.2"
+                rotation="0 0 0"
+                position="0 0 0">
+            </a-cone>
+            <!-- Handle -->
+            <a-cylinder 
+                radius="0.15" height="0.6"
+                material="color: #330000"
+                position="0 -0.5 0">
+            </a-cylinder>
+            <!-- Guard -->
+            <a-box 
+                width="0.5" height="0.1" depth="0.2"
+                material="color: #666666"
+                position="0 -0.2 0">
+            </a-box>
+        </a-entity>
+
+        <!-- Floor -->
+        <a-plane
+            geometry="primitive: plane; width: 30; height: 30"
+            material="color: #333333; roughness: 0.8"
+            rotation="-90 0 0"
+            position="0 0 -10">
+        </a-plane>
+
+        <!-- Walls -->
+        <a-box
+            width="30" height="10" depth="0.5"
+            material="color: #2a2a2a; roughness: 0.8"
+            position="0 5 -25">
+        </a-box>
+
+        <a-box
+            width="30" height="10" depth="0.5"
+            material="color: #2a2a2a; roughness: 0.8"
+            position="0 5 5">
+        </a-box>
+
+        <a-box
+            width="0.5" height="10" depth="30"
+            material="color: #222222; roughness: 0.8"
+            position="-15 5 -10">
+        </a-box>
+
+        <a-box
+            width="0.5" height="10" depth="30"
+            material="color: #222222; roughness: 0.8"
+            position="15 5 -10">
+        </a-box>
+
+        <!-- Ceiling -->
+        <a-plane
+            geometry="primitive: plane; width: 30; height: 30"
+            material="color: #1a1a1a; roughness: 0.9"
+            rotation="90 0 0"
+            position="0 10 -10">
+        </a-plane>
+
+        <!-- Lighting -->
+        <a-light type="ambient" color="white" intensity="0.5"></a-light>
+        <a-light 
+            type="directional" 
+            color="white" 
+            intensity="0.8"
+            position="0 5 0"
+            cast-shadow="true">
+        </a-light>
+
+        <!-- Weapon -->
+        <a-entity 
+            id="weapon"
+            geometry="primitive: cylinder; radius: 0.1; height: 0.5"
+            material="color: #333333"
+            position="0.3 -0.3 -0.5"
+            rotation="0 0 0"
+            scale="1 1 1">
+            <a-sphere 
+                id="muzzle-flash"
+                geometry="primitive: sphere; radius: 0.15"
+                material="color: #ffaa00; emissive: #ffaa00"
+                position="0 -0.3 -0.3"
+                visible="false">
+            </a-sphere>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        // Game state
+        let ammo = 120;
+        let health = 100;
+        let score = 0;
+        let gameOver = false;
+        let enemyElements = [];
+        let debugLog = [];
+
+        function addDebug(msg) {
+            debugLog.push(msg);
+            if (debugLog.length > 8) debugLog.shift();
+            document.getElementById('debug').textContent = debugLog.join('\n');
+            console.log(msg);
+        }
+
+        function screenFlash() {
+            const flash = document.getElementById('screen-flash');
+            flash.style.opacity = '0.6';
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 100);
+        }
+
+        // Pure JavaScript Game Engine
+        class Enemy {
+            static DAMAGE_COOLDOWN = 500;
+            static CONTACT_DAMAGE_RANGE = 1.5;
+            static ENEMY_SPEED = 0.06;
+            static MAX_CHASE_DISTANCE = 25;
+            static BOUNDARY = {
+                x_min: -14.5, x_max: 14.5,
+                y_min: 0.5, y_max: 9.5,
+                z_min: -24.5, z_max: 4.5
+            };
+
+            constructor(id, x, y, z) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.health = 20;
+                this.last_damage_time = 0;
+                this.visible = true;
+                this.in_contact = false;
+            }
+
+            distance_to(px, py, pz) {
+                const dx = this.x - px;
+                const dy = this.y - py;
+                const dz = this.z - pz;
+                return Math.sqrt(dx*dx + dy*dy + dz*dz);
+            }
+
+            take_damage(amount) {
+                this.health -= amount;
+                return this.health <= 0;
+            }
+
+            update_position(player_x, player_y, player_z, current_time) {
+                const dist = this.distance_to(player_x, player_y, player_z);
+                let should_damage = false;
+
+                // Reset contact flag if out of range
+                if (dist > Enemy.CONTACT_DAMAGE_RANGE) {
+                    this.in_contact = false;
+                }
+
+                // Only chase if in range
+                if (dist < Enemy.MAX_CHASE_DISTANCE && dist > 0.1) {
+                    // Calculate direction
+                    const dx = player_x - this.x;
+                    const dy = player_y - this.y;
+                    const dz = player_z - this.z;
+
+                    const dist_inv = 1.0 / dist;
+                    const dir_x = dx * dist_inv;
+                    const dir_y = dy * dist_inv;
+                    const dir_z = dz * dist_inv;
+
+                    // Move towards player
+                    this.x += dir_x * Enemy.ENEMY_SPEED;
+                    this.y += dir_y * Enemy.ENEMY_SPEED * 0.2;
+                    this.z += dir_z * Enemy.ENEMY_SPEED;
+
+                    // Apply boundaries
+                    this.x = Math.max(Enemy.BOUNDARY.x_min, Math.min(Enemy.BOUNDARY.x_max, this.x));
+                    this.y = Math.max(Enemy.BOUNDARY.y_min, Math.min(Enemy.BOUNDARY.y_max, this.y));
+                    this.z = Math.max(Enemy.BOUNDARY.z_min, Math.min(Enemy.BOUNDARY.z_max, this.z));
+                }
+
+                // Check for contact damage - ONLY if close enough
+                if (dist < Enemy.CONTACT_DAMAGE_RANGE && !this.in_contact) {
+                    if (current_time - this.last_damage_time >= Enemy.DAMAGE_COOLDOWN) {
+                        this.last_damage_time = current_time;
+                        this.in_contact = true;
+                        should_damage = true;
+                    }
+                }
+
+                return {
+                    x: this.x,
+                    y: this.y,
+                    z: this.z,
+                    should_damage: should_damage,
+                    health: this.health,
+                    visible: this.visible,
+                    distance: dist
+                };
+            }
+
+            respawn(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.health = 20;
+                this.visible = true;
+                this.last_damage_time = 0;
+                this.in_contact = false;
+            }
+        }
+
+        // Create enemies
+        const enemies_dict = {
+            0: new Enemy(0, -3, 0.75, -8),
+            1: new Enemy(1, 3, 0.75, -8),
+            2: new Enemy(2, -2, 0.75, -15),
+            3: new Enemy(3, 2, 0.75, -15)
+        };
+
+        addDebug("Game engine ready");
+
+        // Get enemy elements
+        document.querySelectorAll('.enemy').forEach((el) => {
+            const idx = parseInt(el.getAttribute('data-index'));
+            enemyElements[idx] = el;
+        });
+
+        // Handle shooting
+        function shoot() {
+            const flash = document.getElementById('muzzle-flash');
+            flash.setAttribute('visible', 'true');
+            setTimeout(() => flash.setAttribute('visible', 'false'), 100);
+
+            screenFlash();
+
+            const camera = document.querySelector('[camera]');
+            const cameraPos = camera.object3D.getWorldPosition(new THREE.Vector3());
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyQuaternion(camera.object3D.quaternion);
+
+            const raycaster = new THREE.Raycaster(cameraPos, direction);
+
+            enemyElements.forEach((el, idx) => {
+                if (!el || !el.getAttribute('visible')) return;
+
+                const intersects = raycaster.intersectObject(el.object3D, true);
+                if (intersects.length > 0) {
+                    const dist = cameraPos.distanceTo(intersects[0].point);
+                    if (dist < 50) {
+                        const enemy = enemies_dict[idx];
+                        const isDead = enemy.take_damage(20);
+                        const currentHealth = enemy.health;
+
+                        addDebug(`Shot enemy ${idx}, health: ${currentHealth}`);
+
+                        // Visual feedback
+                        el.setAttribute('material', 'color: #ff0000');
+                        setTimeout(() => {
+                            if (!isDead && el.getAttribute('visible')) {
+                                el.setAttribute('material', 'color: #cc0000');
+                            }
+                        }, 100);
+
+                        if (isDead) {
+                            el.setAttribute('visible', 'false');
+                            score += 100;
+                            addDebug(`Enemy ${idx} killed!`);
+
+                            setTimeout(() => {
+                                const rx = (Math.random() - 0.5) * 20;
+                                const rz = -8 - Math.random() * 10;
+
+                                enemy.respawn(rx, 0.75, rz);
+                                el.setAttribute('position', `${rx} 0.75 ${rz}`);
+                                el.setAttribute('visible', 'true');
+                            }, 2000);
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('click', () => {
+            if (ammo > 0 && !gameOver) {
+                shoot();
+                ammo--;
+                document.getElementById('ammo').textContent = 'Ammo: ' + ammo;
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (ammo > 0 && !gameOver) {
+                    shoot();
+                    ammo--;
+                    document.getElementById('ammo').textContent = 'Ammo: ' + ammo;
+                }
+            }
+        });
+
+        // Game loop
+        setInterval(() => {
+            if (gameOver) return;
+
+            const player = document.getElementById('player');
+            const playerPos = player.getAttribute('position');
+            const currentTime = Date.now();
+
+            // Update each enemy
+            for (let i = 0; i < 4; i++) {
+                const el = enemyElements[i];
+                if (!el || !el.getAttribute('visible')) continue;
+
+                const enemy = enemies_dict[i];
+                const result = enemy.update_position(playerPos.x, playerPos.y, playerPos.z, currentTime);
+
+                // Update position
+                el.setAttribute('position', `${result.x} ${result.y} ${result.z}`);
+
+                // Apply damage to player ONLY if in contact and should_damage is true
+                if (result.should_damage === true && result.distance < Enemy.CONTACT_DAMAGE_RANGE) {
+                    health -= 10;
+                    document.getElementById('health').textContent = 'Health: ' + Math.round(health);
+                    addDebug(`Enemy ${i} hit! Distance: ${result.distance.toFixed(2)}, HP: ${Math.round(health)}`);
+
+                    if (health <= 0) {
+                        gameOver = true;
+                        alert('Game Over! Final Score: ' + score);
+                    }
+                }
+            }
+        }, 30);
+
+        // Weapon bob
+        let time = 0;
+        setInterval(() => {
+            time += 0.02;
+            const weapon = document.getElementById('weapon');
+            const bobAmount = Math.sin(time * 2) * 0.05;
+            weapon.setAttribute('position', `0.3 ${-0.3 + bobAmount} -0.5`);
+        }, 16);
+    </script>
+</body>
+</html>
